@@ -1,0 +1,10 @@
+*.swp
+fw/*.out
+fw/*.map
+fw/*.o
+fw/*.lst
+boot/*.hex
+boot/*.lst
+boot/*.tmp.sh
+varia/
+tools/*.pyc
