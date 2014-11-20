@@ -2,7 +2,7 @@
 
 from amonome import Amonome
 
-g = Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
+g = Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
 
 anim2 = [
 [ 0.04, [[ 7, 0b10000000 ],

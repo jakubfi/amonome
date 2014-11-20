@@ -2,10 +2,10 @@
 
 import sys
 
-from amonome import Grid
+from amonome import Grid8x8
 
-g1 = Grid("/dev/ttyUSB0")
-g2 = Grid("/dev/ttyUSB1")
+g1 = Grid8x8("/dev/ttyUSB0", 0)
+g2 = Grid8x8("/dev/ttyUSB1", 0)
 
 if len(sys.argv) == 2:
     if sys.argv[1] == "a":

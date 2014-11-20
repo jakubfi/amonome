@@ -1,22 +1,51 @@
+#  Copyright (c) 2014 Jakub Filipowicz <jakubf@gmail.com>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc.,
+#  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
 import serial
 import time
-import random
 
-class Grid:
+GRID_EV_UNKNOWN = 0
+GRID_EV_BUP = 1
+GRID_EV_BDOWN = 2
 
-    def __init__(self, port):
+# ------------------------------------------------------------------------
+class GridEvent:
+    def __init__(self, event, x, y):
+        self.event = event
+        self.x = x
+        self.y = y
+
+# ------------------------------------------------------------------------
+# Basic 8x8 grid - each half of amonome, no coordinates translation
+class Grid8x8:
+
+    def __init__(self, port, timeout):
         self.s = serial.Serial(port,
             baudrate = 115200,
             bytesize = serial.EIGHTBITS,
             parity = serial.PARITY_NONE,
             stopbits = serial.STOPBITS_ONE,
-            timeout = 0.1,
+            timeout = timeout,
             xonxoff = False,
             rtscts = False,
             dsrdtr = False)
         self.s.flushInput()
         self.s.flushOutput()
-        self.matrix = [[0 for x in xrange(8)] for x in xrange(8)]
+        self.buf = []
 
     def close(self):
         self.s.flushInput()
@@ -24,16 +53,18 @@ class Grid:
         self.s.close()
 
     def reset(self):
-        self.leds_off()
+        self.clear()
         self.led_test(0)
         self.intensity(15)
 
     def reboot(self):
         self.send([0xfa, 0xaf])
 
+    def timeout(self, v):
+        self.s.timeout = v
+
     def send(self, data):
         tosend = chr(data[0]) + chr(data[1])
-        print "Sending: 0x%02x, 0x%02x" % (data[0], data[1])
         self.s.write(tosend)
 
     def led_test(self, state):
@@ -57,55 +88,71 @@ class Grid:
         self.send(data)
 
     def led(self, state, x, y):
-        print "led: %i x=%i, y=%i" % (state, x, y)
         data = [0, 0]
         data[0] = 0x20 | state
         data[1] = (x<<4) | y
         self.send(data)
 
-    def leds_off(self):
+    def clear(self):
         for row in range(0,8):
             self.led_row(row, 0)
 
     def read(self):
-        if self.s.inWaiting() < 2:
-            return
+        lbuf = self.s.read(2 - len(self.buf))
+        for char in [ord(x) for x in lbuf]:
+            self.buf.append(char)
 
-        data = [ord(x) for x in self.s.read(2)]
-        print "Read: 0x%02x, 0x%02x" % (data[0], data[1])
-        address = data[0] >> 4;
+        if len(self.buf) < 2:
+            return None
+
+        address = self.buf[0] >> 4;
+        state = self.buf[0] & 0x0F
+        data = self.buf[1]
+        self.buf = []
 
         # button press/depress
         if address == 0:
-            state = data[0] & 0x0F
-            x = data[1] >> 4;
-            y = data[1] & 0xF
+            x = data >> 4;
+            y = data & 0xF
             if state == 1:
-                if self.matrix[x][y] == 1:
-                    self.led(0, x, y)
-                    self.matrix[x][y] = 0
-                else:
-                    self.led(1, x, y)
-                    self.matrix[x][y] = 1
+                return GridEvent(GRID_EV_BDOWN, x, y)
+            elif state == 0:
+                return GridEvent(GRID_EV_BUP, x, y)
+            else:
+                return GridEvent(GRID_EV_UNKNOWN, x, y)
+        else:
+            return GridEvent(GRID_EV_UNKNOWN, x, y)
 
+# ------------------------------------------------------------------------
+# Full 8x16 grid with coordinates translation: (0,0) = upper left
 class Amonome:
 
-    def __init__(self, port0, port1):
-        g0 = Grid(port0)
-        g1 = Grid(port1)
+    def __init__(self, port0, port1, timeout):
+        dtimeout = None
+        if timeout is not None:
+            dtimeout = timeout/2
+        g0 = Grid8x8(port0, dtimeout)
+        g1 = Grid8x8(port1, dtimeout)
         self.g = [g0, g1]
 
     def close(self):
-        self.g[0].close()
-        self.g[1].close()
+        for g in self.g:
+            g.close()
 
     def reset(self):
-        self.g[0].reset()
-        self.g[1].reset()
+        for g in self.g:
+            g.reset()
 
     def reboot(self):
-        self.g[0].reboot()
-        self.g[1].reboot()
+        for g in self.g:
+            g.reboot()
+
+    def timeout(self, v):
+        dtimeout = None
+        if v is not None:
+            dtimeout = v/2
+        for g in self.g:
+            g.timeout(dtimeout)
 
     def led(self, state, x, y):
         if x<8:
@@ -114,12 +161,12 @@ class Amonome:
             self.g[1].led(state, x-8, y)
 
     def led_test(self, state):
-        self.g[0].led_test(state)
-        self.g[1].led_test(state)
+        for g in self.g:
+            g.led_test(state)
 
     def intensity(self, value):
-        self.g[0].intensity(value)
-        self.g[1].intensity(value)
+        for g in self.g:
+            g.intensity(value)
 
     def led_row(self, row, coldata):
         g0 = int('{:08b}'.format(coldata >> 8)[::-1], 2)
@@ -135,12 +182,12 @@ class Amonome:
             self.g[1].led_column(col, rowdata)
 
     def shutdown(self, state):
-        self.g[0].shutdown()
-        self.g[1].shutdown()
+        for g in self.g:
+            g.shutdown()
 
-    def leds_off(self):
-        self.g[0].leds_off()
-        self.g[1].leds_off()
+    def clear(self):
+        for g in self.g:
+            g.clear()
 
     def anim_rows(self, frames):
         for f in frames:
@@ -154,6 +201,22 @@ class Amonome:
                 self.led_column(l[0], l[1])
             time.sleep(f[0])
 
+    def blit(self, x, y, data):
+        pass
+
     def read(self):
-        self.g[0].read()
-        self.g[1].read()
+        ev = []
+
+        for i in [0, 1]:
+            evt = self.g[i].read()
+
+            if evt is not None:
+                if i == 0:
+                    ev.append(GridEvent(evt.event, evt.y, 7-evt.x))
+                else:
+                    ev.append(GridEvent(evt.event, evt.x+8, evt.y))
+
+        return ev
+
+
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

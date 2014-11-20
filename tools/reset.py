@@ -2,9 +2,8 @@
 
 from amonome import Amonome
 
-g = Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
+g = Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
 
 g.reset()
-g.intensity(3)
 
 g.close();
