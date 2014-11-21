@@ -124,6 +124,28 @@ class Grid8x8:
             return GridEvent(GRID_EV_UNKNOWN, x, y)
 
 # ------------------------------------------------------------------------
+class Screen:
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.clear()
+
+    def clear(self):
+        self.data = [[0 for x in xrange(self.height)] for x in xrange(self.width)]
+
+    def import_array(self, x, y, a):
+        for l in range(0, len(a)):
+            for c in range(0, len(a[0])):
+                if x+c >= 0 and x+c < self.width and y+l >= 0 and y+l < self.height:
+                    self.data[x+c][y+l] = a[l][c]
+
+    def line_horiz(self, x, y, length):
+        for xpos in range(x, x+length):
+            if x >= 0 and x < self.width and y >= 0 and y < self.height:
+                self.data[xpos][y] = 1
+
+# ------------------------------------------------------------------------
 # Full 8x16 grid with coordinates translation: (0,0) = upper left
 class Amonome:
 
@@ -201,8 +223,19 @@ class Amonome:
                 self.led_column(l[0], l[1])
             time.sleep(f[0])
 
-    def blit(self, x, y, data):
-        pass
+    def blit(self, screen):
+        if screen.width != 16 or screen.height != 8:
+            raise TypeError("Cannot blit screens other than 16x8 onto amonome surface")
+            return
+
+        col_n = 0
+        for column in screen.data:
+            v = 0;
+            for bit in column:
+                v <<= 1
+                v |= bit
+            self.led_column(col_n, v);
+            col_n += 1
 
     def read(self):
         ev = []
