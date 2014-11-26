@@ -18,7 +18,6 @@
 
 typedef void (*button_event_f)(uint8_t x, uint8_t y, uint8_t state);
 
-void keypad_init();
 void keypad_scan(button_event_f event_fun);
 
 #endif

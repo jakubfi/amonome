@@ -96,7 +96,6 @@ void display_init()
 	display_test(0);
 	max_cmd(max7219_reg_scanLimit, 7);
 	display_intensity(15);
-	display_clear();
 	display_update();
 	display_active(1);
 }

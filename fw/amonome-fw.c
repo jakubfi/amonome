@@ -45,10 +45,10 @@
 #define PORTD_Data_Direction 0xFE
 #define PORTB_Data_Direction 0xFD
 
-int8_t IntensityChange;
-int8_t DisplayTestChange;
-int8_t ShutdownModeChange;
-int8_t WaitingForAddress;
+int8_t IntensityChange = -1;
+int8_t DisplayTestChange = -1;
+int8_t ShutdownModeChange = -1;
+int8_t WaitingForAddress = 1;
 
 // -----------------------------------------------------------------------
 void on_button_event(uint8_t x, uint8_t y, uint8_t state)
@@ -153,11 +153,6 @@ void comm_init()
 	// 128 uS.
 	TIMSK2 = 1 << TOIE2;
 
-	IntensityChange = -1;
-	DisplayTestChange = -1;
-	ShutdownModeChange = -1;
-
-	WaitingForAddress = 1;
 	serial_begin(115200, SERIAL_8N1);
 }
 
@@ -177,7 +172,6 @@ int main(void)
 {
 	hw_init();
 	display_init();
-	keypad_init();
 	softboot_check();
 	comm_init();
 	startup_anim();

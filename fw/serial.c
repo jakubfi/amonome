@@ -2,7 +2,8 @@
 	HardwareSerial.cpp - Hardware serial library for Wiring
 	Copyright (c) 2006 Nicholas Zambetti.	All right reserved.
 
-	Modified and minimalized for amonome to work outside Arduino framework
+	(Modified, ported to C and minimalized for amonome
+	to work outside Arduino framework)
 
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public

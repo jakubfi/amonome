@@ -17,9 +17,10 @@
 
 #include "keypad.h"
 
-// Connections to the 164 shift register
+// Connections to the 164 shift register:
 // r164_data_pin  = 3 = PORTD, bit 3
 // r164_clock_pin = 2 = PORTD, bit 2
+
 #define R164_DATA_PORT (PORTD)
 #define r164_data_pin 3
 #define r164_data_mask_high (1 << r164_data_pin)
@@ -30,10 +31,11 @@
 #define r164_clock_mask_high (1 << r164_clock_pin)
 #define r164_clock_mask_low (~r164_clock_mask_high)
 
-// Connections to the 165 shift register
+// Connections to the 165 shift register:
 // r165_load_pin  = arduino digital pin 8 = PORTB, bit 0
 // r165_data_pin  = arduino digital pin 9 = PORTB, bit 1
 // r165_clock_pin = arduino digital pin 7 = PORTD, bit 7
+
 #define R165_LOAD_PORT (PORTB)
 #define r165_load_pin 0
 #define r165_load_mask_high (1 << r165_load_pin)
@@ -48,24 +50,13 @@
 #define r165_clock_mask_high (1 << r165_clock_pin)
 #define r165_clock_mask_low (~r165_clock_mask_high)
 
-#define kButtonUpDefaultDebounceCount 12 // Default deboucer count
+#define kButtonUpDefaultDebounceCount 12 // Default debouce count
 
 uint8_t button_current[8];				// current physical state
 uint8_t button_last[8];					// previous physical state
 uint8_t button_state[8];				// debounced state
 uint8_t button_event[8];				// final state changed
 uint8_t button_debounce_count[8][8];	// debouncer
-
-// -----------------------------------------------------------------------
-void keypad_init()
-{
-	for (uint8_t i=0 ; i<8 ; i++) {
-        button_current[i] = 0;
-        button_last[i] = 0;
-        button_state[i] = 0;
-        button_event[i] = 0;
-	}
-}
 
 // -----------------------------------------------------------------------
 void buttonCheck(uint8_t row, uint8_t index)
