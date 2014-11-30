@@ -3,6 +3,7 @@ fw/*.out
 fw/*.map
 fw/*.o
 fw/*.lst
+fw/*.hex
 boot/*.hex
 boot/*.lst
 boot/*.tmp.sh

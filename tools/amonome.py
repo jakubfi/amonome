@@ -178,7 +178,7 @@ class Amonome:
 
     def led(self, state, x, y):
         if x<8:
-            self.g[0].led(state, 7-y, x)
+            self.g[0].led(state, 7-x, 7-y)
         else:
             self.g[1].led(state, x-8, y)
 
@@ -191,14 +191,14 @@ class Amonome:
             g.intensity(value)
 
     def led_row(self, row, coldata):
-        g0 = int('{:08b}'.format(coldata >> 8)[::-1], 2)
+        g0 = coldata >> 8
         g1 = int('{:08b}'.format(coldata &255)[::-1], 2)
-        self.g[0].led_column(7-row, g0)
+        self.g[0].led_row(7-row, g0)
         self.g[1].led_row(row, g1)
 
     def led_column(self, col, rowdata):
         if col<8:
-            self.g[0].led_row(col, rowdata)
+            self.g[0].led_column(7-col, rowdata)
         else:
             rowdata = int('{:08b}'.format(rowdata)[::-1], 2)
             self.g[1].led_column(col, rowdata)
@@ -245,7 +245,7 @@ class Amonome:
 
             if evt is not None:
                 if i == 0:
-                    ev.append(GridEvent(evt.event, evt.y, 7-evt.x))
+                    ev.append(GridEvent(evt.event, 7-evt.x, 7-evt.y))
                 else:
                     ev.append(GridEvent(evt.event, evt.x+8, evt.y))
 

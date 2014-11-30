@@ -23,7 +23,7 @@ void startup_anim()
 	uint8_t v = 0b00001111;
 
 	for (int8_t i=7 ; i>=0 ; i--) {
-		display_row(7, (v<<i) & 0xf0);
+		display_col(0, (v<<i) & 0xf0);
 		display_update();
 		_delay_ms(40);
 	}

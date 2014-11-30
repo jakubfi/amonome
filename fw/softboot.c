@@ -53,7 +53,7 @@ void softboot_do()
 void softboot_button_event(uint8_t x, uint8_t y, uint8_t state)
 {
 	if (state) {
-		if ((x == 0) && (y == 7)) {
+		if ((x == 0) && ((y == 3) || (y == 4))) {
 			softboot_do();
 		}
 	}
