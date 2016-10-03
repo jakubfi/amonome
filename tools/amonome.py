@@ -134,6 +134,9 @@ class Screen:
     def clear(self):
         self.data = [[0 for x in xrange(self.height)] for x in xrange(self.width)]
 
+    def set(self):
+        self.data = [[1 for x in xrange(self.height)] for x in xrange(self.width)]
+
     def import_array(self, x, y, a):
         for l in range(0, len(a)):
             for c in range(0, len(a[0])):
