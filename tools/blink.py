@@ -13,7 +13,9 @@ s2 = amonome.Screen(16, 8)
 s2.set()
 
 while 1:
+    g.blit(s1)
+    time.sleep(0.04)
     g.blit(s2)
-    g.blit(s2)
+    time.sleep(0.04)
 
 g.close()
