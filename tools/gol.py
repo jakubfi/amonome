@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 import sys
 import time
@@ -142,7 +142,7 @@ except Exception, e:
 while True:
     time_spent = 0
     start_tick = time.time()
-    while time_spent < 1/5.0:
+    while time_spent < 1/8.0:
         try:
             for e in g.read():
                 process_event(e, matrix)
