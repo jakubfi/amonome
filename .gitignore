@@ -9,3 +9,4 @@ boot/*.lst
 boot/*.tmp.sh
 varia/
 tools/*.pyc
+tools/__pycache__

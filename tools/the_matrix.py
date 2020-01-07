@@ -6,8 +6,14 @@ import random
 import time
 
 STATE_DEAD = 0
-STATE_HOLD = 1
-STATE_LIVE = 2
+STATE_LIVE = 1
+
+drop_count = 6 * 8
+SPEED_MIN = 50
+SPEED_MAX = 250
+LEN_MIN = 2
+LEN_MAX = 8
+POS_MAX = 60
 
 # ------------------------------------------------------------------------
 class Drop:
@@ -24,29 +30,28 @@ class Drop:
     # --------------------------------------------------------------------
     def advance(self, t):
         if self.state == STATE_DEAD:
-            self.speed = random.randint(60, 300) / 1000.0
-            self.len = random.randint(1, 7)
-            self.range = random.randint(16, 50)
+            self.len = random.randint(LEN_MIN, LEN_MAX)
+            self.speed = random.randint(SPEED_MIN, SPEED_MAX)
             self.pos = -self.len
             self.state = STATE_LIVE
-            print("%i : speed %.4f, len %i, range %i" % (self.num, self.speed, self.len, self.range))
+            print("%i : speed %.4f, len %i" % (self.num, self.speed, self.len))
         elif self.state == STATE_LIVE:
-            self.pos += self.speed
-            if self.pos > self.range:
+            self.pos += self.speed / 1000.0
+            if self.pos > POS_MAX:
                 self.state = STATE_DEAD
 
     # --------------------------------------------------------------------
     def display(self):
         start = int(self.pos) if self.pos >= 0 else 0
         end = int(self.pos+self.len) if self.pos+self.len <= 16 else 16
-        s.line_horiz(start, self.num, end-start)
+        s.line_horiz(start, self.num % 8, end-start)
 
 drop = []
 
 # ------------------------------------------------------------------------
 def update(t, s):
     s.clear()
-    for i in range(8):
+    for i in range(drop_count):
         drop[i].advance(t)
         drop[i].display()
 
@@ -62,7 +67,7 @@ except Exception, e:
 
 s = amonome.Screen(16, 8)
 
-for i in range(8):
+for i in range(drop_count):
     drop.append(Drop(s, i))
 
 delta = 0.01
