@@ -28,6 +28,9 @@ class GridEvent:
         self.event = event
         self.x = x
         self.y = y
+    def __str__(self):
+        event_names = ["unknown", "release", "press"]
+        return "(%d, %d): %s" % (self.x, self.y, event_names[self.event])
 
 # ------------------------------------------------------------------------
 # Basic 8x8 grid - each half of amonome, no coordinates translation
@@ -146,6 +149,11 @@ class Screen:
         for xpos in range(x, x+length):
             if x >= 0 and x < self.width and y >= 0 and y < self.height:
                 self.data[xpos][y] = 1
+
+    def line_vert(self, x, y, length):
+        for ypos in range(y, y+length):
+            if x >= 0 and x < self.width and y >= 0 and y < self.height:
+                self.data[x][ypos] = 1
 
 # ------------------------------------------------------------------------
 # Full 8x16 grid with coordinates translation: (0,0) = upper left
