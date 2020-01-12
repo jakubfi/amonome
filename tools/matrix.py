@@ -1,9 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import amonome
 
-matrix = [[0 for x in xrange(8)] for x in xrange(16)]
+matrix = [[0 for x in range(8)] for x in range(16)]
 
 # ------------------------------------------------------------------------
 def process_event(e):
@@ -19,22 +19,18 @@ def process_event(e):
 # --- MAIN ---------------------------------------------------------------
 # ------------------------------------------------------------------------
 
-try:
-    g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
-    g.reset()
-except Exception, e:
-    print "Cannot initialize amonome: %s" % str(e)
-    sys.exit(1)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
+g.reset()
 
 while True:
     try:
         for e in g.read():
             process_event(e)
     except KeyboardInterrupt:
-        print "Bye."
+        print("Bye.")
         sys.exit(0)
-    except Exception, e:
-        print "Error communicating with amonome: %s" % str(e)
+    except Exception as e:
+        print("Error communicating with amonome: %s" % str(e))
 
 g.close()
 

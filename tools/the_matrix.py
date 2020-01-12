@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import amonome
@@ -58,12 +58,8 @@ def update(t, s):
 # ------------------------------------------------------------------------
 # --- MAIN ---------------------------------------------------------------
 # ------------------------------------------------------------------------
-try:
-    g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
-    g.reset()
-except Exception, e:
-    print "Cannot initialize amonome: %s" % str(e)
-    sys.exit(1)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
+g.reset()
 
 s = amonome.Screen(16, 8)
 
@@ -80,7 +76,7 @@ try:
         tsec += delta
 
 except KeyboardInterrupt:
-    print "Bye."
+    print("Bye.")
 
 g.close()
 

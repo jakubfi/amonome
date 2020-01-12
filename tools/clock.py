@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import amonome
 import time
 
-matrix = [[0 for x in xrange(8)] for x in xrange(16)]
+matrix = [[0 for x in range(8)] for x in range(16)]
 
 digit = [
 [
@@ -114,8 +114,8 @@ def update(t, tsec, s):
 try:
     g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
     g.reset()
-except Exception, e:
-    print "Cannot initialize amonome: %s" % str(e)
+except Exception as e:
+    print("Cannot initialize amonome: %s" % str(e))
     sys.exit(1)
 
 s = amonome.Screen(16, 8)
@@ -130,7 +130,7 @@ try:
         tsec += 1
 
 except KeyboardInterrupt:
-    print "Bye."
+    print("Bye.")
 
 g.close()
 

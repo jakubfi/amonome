@@ -64,8 +64,7 @@ class Grid8x8:
         self.s.timeout = v
 
     def send(self, data):
-        tosend = chr(data[0]) + chr(data[1])
-        self.s.write(tosend)
+        self.s.write(data)
 
     def led_test(self, state):
         data = [0x40, state]
@@ -99,7 +98,7 @@ class Grid8x8:
 
     def read(self):
         lbuf = self.s.read(2 - len(self.buf))
-        for char in [ord(x) for x in lbuf]:
+        for char in lbuf:
             self.buf.append(char)
 
         if len(self.buf) < 2:
@@ -132,10 +131,10 @@ class Screen:
         self.clear()
 
     def clear(self):
-        self.data = [[0 for x in xrange(self.height)] for x in xrange(self.width)]
+        self.data = [[0 for x in range(self.height)] for x in range(self.width)]
 
     def set(self):
-        self.data = [[1 for x in xrange(self.height)] for x in xrange(self.width)]
+        self.data = [[1 for x in range(self.height)] for x in range(self.width)]
 
     def import_array(self, x, y, a):
         for l in range(0, len(a)):

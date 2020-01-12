@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import time
@@ -7,7 +7,7 @@ import amonome
 
 paused = False
 intensity = 15
-matrix = [[0 for y in xrange(8)] for x in xrange(15)]
+matrix = [[0 for y in range(8)] for x in range(15)]
 
 # ------------------------------------------------------------------------
 def command(y):
@@ -17,20 +17,20 @@ def command(y):
     global paused
 
     if y == 0:
-        print "Intensity+"
+        print("Intensity+")
         if intensity < 15: intensity += 1
         g.intensity(intensity)
     elif y == 1:
-        print "Intensity-"
+        print("Intensity-")
         if intensity > 1: intensity -= 1
         g.intensity(intensity)
     elif y == 2:
         paused = not paused
-        print "Paused: " + str(paused)
+        print("Paused: %s" % str(paused))
         if paused: g.led(1, 15, 2)
         else: g.led(0, 15, 2)
     elif y == 3:
-        print "Lightweight spaceship"
+        print("Lightweight spaceship")
         matrix[0][2] = 1
         matrix[0][4] = 1
         matrix[1][5] = 1
@@ -41,14 +41,14 @@ def command(y):
         matrix[4][3] = 1
         matrix[3][2] = 1
     elif y == 4:
-        print "Glider"
+        print("Glider")
         matrix[1][0] = 1
         matrix[2][1] = 1
         matrix[0][2] = 1
         matrix[1][2] = 1
         matrix[2][2] = 1
     elif y == 5:
-        print "Random block"
+        print("Random block")
         px = random.randint(0, 13)
         py = random.randint(0, 6)
         matrix[px][py] = 1
@@ -56,15 +56,15 @@ def command(y):
         matrix[px][py+1] = 1
         matrix[px+1][py+1] = 1
     elif y == 6:
-        print "Random blinker"
+        print("Random blinker")
         px = random.randint(1, 13)
         py = random.randint(1, 6)
         matrix[px][py] = 1
         matrix[px+1][py] = 1
         matrix[px-1][py] = 1
     elif y == 7:
-        print "Clear"
-        matrix = [[0 for y in xrange(8)] for x in xrange(15)]
+        print("Clear")
+        matrix = [[0 for y in range(8)] for x in range(15)]
 
     update_screen(g)
 
@@ -100,10 +100,10 @@ def neighbours(m, x, y):
 
 # ------------------------------------------------------------------------
 def update_game(m):
-    new_matrix = [[0 for y in xrange(8)] for x in xrange(15)]
+    new_matrix = [[0 for y in range(8)] for x in range(15)]
 
-    for x in xrange(15):
-        for y in xrange(8):
+    for x in range(15):
+        for y in range(8):
             if m[x][y]:
                 if neighbours(m, x, y) < 2:
                     new_matrix[x][y] = 0
@@ -119,9 +119,9 @@ def update_game(m):
 
 # ------------------------------------------------------------------------
 def update_screen(g):
-    for x in xrange(15):
+    for x in range(15):
         data = 0
-        for y in xrange(8):
+        for y in range(8):
             data += 2**y * matrix[x][7-y]
         g.led_column(x, data)
     pass
@@ -132,12 +132,8 @@ def update_screen(g):
 
 random.seed()
 
-try:
-    g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
-    g.reset()
-except Exception, e:
-    print "Cannot initialize amonome: %s" % str(e)
-    sys.exit(1)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
+g.reset()
 
 while True:
     time_spent = 0
@@ -147,7 +143,7 @@ while True:
             for e in g.read():
                 process_event(e, matrix)
         except KeyboardInterrupt:
-            print "Bye."
+            print("Bye.")
             sys.exit(0)
         time_spent = time.time() - start_tick
 
