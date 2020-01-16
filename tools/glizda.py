@@ -273,7 +273,7 @@ class Level(Game):
 
     # --------------------------------------------------------------------
     def event_process(self, ev):
-        if ev.event == amonome.GRID_EV_BDOWN and ev.y == 6:
+        if ev.event == amonome.GRID_EV_BDOWN and (ev.y == 6 or ev.y == 7):
             if ev.x == 4:
                 self.level = 3
             elif ev.x == 6:
