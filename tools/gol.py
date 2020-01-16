@@ -9,21 +9,26 @@ paused = False
 intensity = 15
 matrix = [[0 for y in range(8)] for x in range(15)]
 
+frame_time = 1/8.0
+
 # ------------------------------------------------------------------------
 def command(y):
     global matrix
     global g
     global intensity
     global paused
+    global frame_time
+
+    frame_delta = 1.0/128.0
 
     if y == 0:
-        print("Intensity+")
-        if intensity < 15: intensity += 1
-        g.intensity(intensity)
+        print("Speed+")
+        if frame_time > frame_delta:
+            frame_time -= frame_delta
     elif y == 1:
-        print("Intensity-")
-        if intensity > 1: intensity -= 1
-        g.intensity(intensity)
+        print("Speed-")
+        if frame_time < 1.0/4.0:
+            frame_time += frame_delta
     elif y == 2:
         paused = not paused
         print("Paused: %s" % str(paused))
@@ -87,15 +92,34 @@ def neighbours(m, x, y):
     if x > 0:
         n += m[x-1][y]
         if y > 0: n += m[x-1][y-1]
+        elif y == 0: n += m[x-1][7]
         if y < 7: n += m[x-1][y+1]
+        elif y == 7: n += m[x-1][0]
+    elif x == 0:
+        n += m[14][y]
+        if y > 0: n += m[14][y-1]
+        elif y == 0: n += m[14][7]
+        if y < 7: n += m[14][y+1]
+        elif y == 7: n += m[14][0]
 
     if x < 14:
         n += m[x+1][y]
         if y > 0: n += m[x+1][y-1]
+        elif y == 0: n += m[x+1][7]
         if y < 7: n += m[x+1][y+1]
+        elif y == 7: n += m[x+1][0]
+    elif x == 14:
+        n += m[0][y]
+        if y > 0: n += m[0][y-1]
+        elif y == 0: n += m[0][7]
+        if y < 7: n += m[0][y+1]
+        elif y == 7: n += m[0][0]
 
     if y > 0: n += m[x][y-1]
+    elif y == 0: n += m[x][7]
     if y < 7: n += m[x][y+1]
+    elif y == 7: n += m[x][0]
+
     return n
 
 # ------------------------------------------------------------------------
@@ -138,7 +162,7 @@ g.reset()
 while True:
     time_spent = 0
     start_tick = time.time()
-    while time_spent < 1/8.0:
+    while time_spent < frame_time:
         try:
             for e in g.read():
                 process_event(e, matrix)
