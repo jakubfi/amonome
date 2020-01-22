@@ -310,7 +310,7 @@ class Level(Game):
 
     # --------------------------------------------------------------------
     def get_ready(self):
-        for i in range(4):
+        for i in range(3,4):
             for x in range(16):
                 self.screen.line_vert(x, 0, 8)
                 self.s.blit(self.screen)
@@ -351,7 +351,8 @@ class Glizda(Game):
 
     # --------------------------------------------------------------------
     def reset(self):
-        self.set_vector(Point(1, 0))
+        self.v = Point(1, 0)
+        self.new_v = self.v
         self.glizda = [Point(1, 2), Point(2, 2), Point(3, 2)]
         self.max_len = len(self.glizda)
         self.add_food()
@@ -376,6 +377,7 @@ class Glizda(Game):
 
     # --------------------------------------------------------------------
     def game_over(self):
+        print("Score: %i" % self.max_len)
         for i in range(10):
             self.s.intensity(2)
             time.sleep(0.05)
@@ -418,6 +420,10 @@ class Glizda(Game):
         if nhead.x > 15 or nhead.x < 0 or nhead.y > 7 or nhead.y < 0 or nhead in self.glizda:
             return False
 
+        # grow the worm
+        self.glizda.append(nhead)
+        self.s.led(True, nhead.x, nhead.y)
+
         # check for food collision
         if self.food == nhead:
             self.s.led(False, nhead.x, nhead.y)
@@ -430,10 +436,6 @@ class Glizda(Game):
             time.sleep(0.02)
             self.max_len += 1
             self.add_food()
-
-        # grow the worm
-        self.glizda.append(nhead)
-        self.s.led(True, nhead.x, nhead.y)
 
         # move the worm
         while len(self.glizda) > self.max_len:
