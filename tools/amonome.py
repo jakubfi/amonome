@@ -155,6 +155,9 @@ class Screen:
             if x >= 0 and x < self.width and y >= 0 and y < self.height:
                 self.data[x][ypos] = 1
 
+    def set(self, state, x, y):
+        self.data[x][y] = state
+
 # ------------------------------------------------------------------------
 # Full 8x16 grid with coordinates translation: (0,0) = upper left
 class Amonome:
