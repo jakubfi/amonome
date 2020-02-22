@@ -36,13 +36,13 @@ class GridEvent:
 # Basic 8x8 grid - each half of amonome, no coordinates translation
 class Grid8x8:
 
-    def __init__(self, port, timeout):
+    def __init__(self, port):
         self.s = serial.Serial(port,
             baudrate = 115200,
             bytesize = serial.EIGHTBITS,
             parity = serial.PARITY_NONE,
             stopbits = serial.STOPBITS_ONE,
-            timeout = timeout,
+            timeout = 0,
             xonxoff = False,
             rtscts = False,
             dsrdtr = False)
@@ -62,9 +62,6 @@ class Grid8x8:
 
     def reboot(self):
         self.send([0xfa, 0xaf])
-
-    def timeout(self, v):
-        self.s.timeout = v
 
     def send(self, data):
         self.s.write(data)
@@ -126,49 +123,14 @@ class Grid8x8:
             return GridEvent(GRID_EV_UNKNOWN, x, y)
 
 # ------------------------------------------------------------------------
-class Screen:
-
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.clear()
-
-    def clear(self):
-        self.data = [[0 for x in range(self.height)] for x in range(self.width)]
-
-    def set(self):
-        self.data = [[1 for x in range(self.height)] for x in range(self.width)]
-
-    def import_array(self, x, y, a):
-        for l in range(0, len(a)):
-            for c in range(0, len(a[0])):
-                if x+c >= 0 and x+c < self.width and y+l >= 0 and y+l < self.height:
-                    self.data[x+c][y+l] = a[l][c]
-
-    def line_horiz(self, x, y, length):
-        for xpos in range(x, x+length):
-            if x >= 0 and x < self.width and y >= 0 and y < self.height:
-                self.data[xpos][y] = 1
-
-    def line_vert(self, x, y, length):
-        for ypos in range(y, y+length):
-            if x >= 0 and x < self.width and y >= 0 and y < self.height:
-                self.data[x][ypos] = 1
-
-    def set(self, state, x, y):
-        self.data[x][y] = state
-
-# ------------------------------------------------------------------------
 # Full 8x16 grid with coordinates translation: (0,0) = upper left
 class Amonome:
 
-    def __init__(self, port0, port1, timeout):
-        dtimeout = None
-        if timeout is not None:
-            dtimeout = timeout/2
-        g0 = Grid8x8(port0, dtimeout)
-        g1 = Grid8x8(port1, dtimeout)
+    def __init__(self, port0, port1):
+        g0 = Grid8x8(port0)
+        g1 = Grid8x8(port1)
         self.g = [g0, g1]
+        self.next_port = 0
 
     def close(self):
         for g in self.g:
@@ -181,13 +143,6 @@ class Amonome:
     def reboot(self):
         for g in self.g:
             g.reboot()
-
-    def timeout(self, v):
-        dtimeout = None
-        if v is not None:
-            dtimeout = v/2
-        for g in self.g:
-            g.timeout(dtimeout)
 
     def led(self, state, x, y):
         if x<8:
@@ -250,19 +205,53 @@ class Amonome:
             self.led_column(col_n, v);
             col_n += 1
 
-    def read(self):
-        ev = []
+    def read(self, allowed_events = [GRID_EV_BDOWN, GRID_EV_BUP]):
+        for _ in range(2):
+            evt = True
+            while evt:
+                evt = self.g[self.next_port].read()
+                if evt and evt.event in allowed_events:
+                    if self.next_port == 0:
+                        return GridEvent(evt.event, 7-evt.x, 7-evt.y)
+                    else:
+                        return GridEvent(evt.event, evt.x+8, evt.y)
 
-        for i in [0, 1]:
-            evt = self.g[i].read()
+            self.next_port = (self.next_port + 1) & 1
 
-            if evt is not None:
-                if i == 0:
-                    ev.append(GridEvent(evt.event, 7-evt.x, 7-evt.y))
-                else:
-                    ev.append(GridEvent(evt.event, evt.x+8, evt.y))
+        return None
 
-        return ev
+# ------------------------------------------------------------------------
+class Screen:
+
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.clear()
+
+    def clear(self):
+        self.data = [[0 for x in range(self.height)] for x in range(self.width)]
+
+    def set_all(self):
+        self.data = [[1 for x in range(self.height)] for x in range(self.width)]
+
+    def import_array(self, x, y, a):
+        for l in range(0, len(a)):
+            for c in range(0, len(a[0])):
+                if x+c >= 0 and x+c < self.width and y+l >= 0 and y+l < self.height:
+                    self.data[x+c][y+l] = a[l][c]
+
+    def line_horiz(self, x, y, length):
+        for xpos in range(x, x+length):
+            if x >= 0 and x < self.width and y >= 0 and y < self.height:
+                self.data[xpos][y] = 1
+
+    def line_vert(self, x, y, length):
+        for ypos in range(y, y+length):
+            if x >= 0 and x < self.width and y >= 0 and y < self.height:
+                self.data[x][ypos] = 1
+
+    def set(self, state, x, y):
+        self.data[x][y] = state
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

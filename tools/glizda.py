@@ -4,6 +4,8 @@ import sys
 import time
 import random
 import amonome
+from point import Point
+from game import Game
 
 numbers = [
 [
@@ -198,92 +200,49 @@ intro = [
 ]
 
 # ------------------------------------------------------------------------
-class Point:
+class GlizdaLevel(Game):
 # ------------------------------------------------------------------------
 
     # --------------------------------------------------------------------
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    # --------------------------------------------------------------------
-    def __str__(self):
-        return "(%i, %i)" % (self.x, self.y)
-
-    # --------------------------------------------------------------------
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
-
-    # --------------------------------------------------------------------
-    def __add__(self, other):
-        x = self.x + other.x
-        y = self.y + other.y
-        return Point(x, y)
-
-# ------------------------------------------------------------------------
-class Game:
-# ------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------
-    def __init__(self, port_a, port_b, hz=60):
-        self.hz = hz
-        self.frame_time = 1.0 / self.hz
-        self.s = amonome.Amonome(port_a, port_b, self.frame_time)
-        self.s.reset()
-        print("Surface on %s and %s initialized for %i Hz (frame time: %.2f)" % (port_a, port_b, hz, self.frame_time))
-
-    # --------------------------------------------------------------------
-    def event_process(self, e):
-        print(e)
-
-    # --------------------------------------------------------------------
-    def logic_tick(self):
-        print("=== TICK %d Hz ===" % self.hz)
-
-    # --------------------------------------------------------------------
-    def game_over(self):
-        print("GAME OVER")
-
-    # --------------------------------------------------------------------
-    def run(self):
-        while True:
-            t_spent = 0
-            t_start = time.time()
-            while t_spent < self.frame_time:
-                for e in self.s.read():
-                    self.event_process(e)
-                t_spent = time.time() - t_start
-
-            if self.logic_tick() == False:
-                self.game_over()
-                break
-
-# ------------------------------------------------------------------------
-class Level(Game):
-# ------------------------------------------------------------------------
-
-    # --------------------------------------------------------------------
-    def __init__(self, port_a, port_b, hz=60):
-        Game.__init__(self, port_a, port_b, hz)
-        self.screen = amonome.Screen(16, 8)
+    def __init__(self, width, height, port_a, port_b, hz=60):
+        Game.__init__(self, width, height, port_a, port_b, hz)
         self.level = 0
+        self.movable_food = True
+        self.absolute_control = False
         self.ticks = 0
-        self.page = -1
-        self.flip_page()
+        self.page = 0
 
     # --------------------------------------------------------------------
     def event_process(self, ev):
-        if ev.event == amonome.GRID_EV_BDOWN and (ev.y == 6 or ev.y == 7):
-            if ev.x == 4:
-                self.level = 3
-            elif ev.x == 6:
-                self.level = 5
-            elif ev.x == 8:
-                self.level = 7
-            elif ev.x == 10:
-                self.level = 10
-            elif ev.x == 12:
-                self.level = 15
+        if ev.event == amonome.GRID_EV_BDOWN:
+            if ev.x == 0 and ev.y == 0:
+                self.movable_food = False
+            if ev.x == 15 and ev.y == 0:
+                self.absolute_control = True
+            if ev.y == 6 or ev.y == 7:
+                if ev.x == 4:
+                    self.level = 1
+                elif ev.x == 6:
+                    self.level = 5
+                elif ev.x == 8:
+                    self.level = 7
+                elif ev.x == 10:
+                    self.level = 10
+                elif ev.x == 12:
+                    self.level = 15
+
+    # --------------------------------------------------------------------
+    def game_over(self):
+        print("Selected level: {} (food is {})".format(self.level, "movable" if self.movable_food else "static"))
+
+    # --------------------------------------------------------------------
+    def draw(self):
+        self.screen.import_array(0, 0, intro[self.page])
+        self.screen.set(True, 4, 6)
+        self.screen.set(True, 6, 6)
+        self.screen.set(True, 8, 6)
+        self.screen.set(True, 10, 6)
+        self.screen.set(True, 12, 6)
 
     # --------------------------------------------------------------------
     def flip_page(self):
@@ -292,20 +251,20 @@ class Level(Game):
             self.page = 0
         for i in range(3):
             self.screen.import_array(0, 0, empty)
+            self.screen.set(True, 4, 6)
+            self.screen.set(True, 6, 6)
+            self.screen.set(True, 8, 6)
+            self.screen.set(True, 10, 6)
+            self.screen.set(True, 12, 6)
             self.s.blit(self.screen)
-            self.s.led(True, 4, 6)
-            self.s.led(True, 6, 6)
-            self.s.led(True, 8, 6)
-            self.s.led(True, 10, 6)
-            self.s.led(True, 12, 6)
             time.sleep(0.01)
             self.screen.import_array(0, 0, intro[self.page])
+            self.screen.set(True, 4, 6)
+            self.screen.set(True, 6, 6)
+            self.screen.set(True, 8, 6)
+            self.screen.set(True, 10, 6)
+            self.screen.set(True, 12, 6)
             self.s.blit(self.screen)
-            self.s.led(True, 4, 6)
-            self.s.led(True, 6, 6)
-            self.s.led(True, 8, 6)
-            self.s.led(True, 10, 6)
-            self.s.led(True, 12, 6)
             time.sleep(0.05)
 
     # --------------------------------------------------------------------
@@ -339,119 +298,255 @@ class Level(Game):
 
 
 # ------------------------------------------------------------------------
-class Glizda(Game):
+class Glizda:
+# ------------------------------------------------------------------------
+    DIR_UP = 1
+    DIR_DOWN = 2
+    DIR_LEFT = 3
+    DIR_RIGHT = 4
+
+    def __init__(self):
+        self.food = 0
+        self.reset()
+
+    def reset(self):
+        self.vector = Point(0, 0)
+
+        self.body = [Point(1, 2), Point(2, 2), Point(3, 2)]
+        self.set_direction(Glizda.DIR_RIGHT)
+
+        #self.body = [
+        #    Point(0,0),Point(1,0),Point(2,0),Point(3,0),Point(4,0),Point(5,0),Point(6,0),Point(7,0),Point(8,0),Point(9,0),Point(10,0),Point(11,0),Point(12,0),Point(13,0),Point(14,0),Point(15,0),
+        #    Point(15,1),Point(14,1),Point(13,1),Point(12,1),Point(11,1),Point(10,1),Point(9,1),Point(8,1),Point(7,1),Point(6,1),Point(5,1),Point(4,1),Point(3,1),Point(2,1),Point(1,1),Point(0,1),
+        #    Point(0,2),Point(1,2),Point(2,2),Point(3,2),Point(4,2),Point(5,2),Point(6,2),Point(7,2),Point(8,2),Point(9,2),Point(10,2),Point(11,2),Point(12,2),Point(13,2),Point(14,2),Point(15,2),
+        #    Point(15,3),Point(14,3),Point(13,3),Point(12,3),Point(11,3),Point(10,3),Point(9,3),Point(8,3),Point(7,3),Point(6,3),Point(5,3),Point(4,3),Point(3,3),Point(2,3),Point(1,3),Point(0,3),
+        #    Point(0,4),Point(1,4),Point(2,4),Point(3,4),Point(4,4),Point(5,4),Point(6,4),Point(7,4),Point(8,4),Point(9,4),Point(10,4),Point(11,4),Point(12,4),Point(13,4),Point(14,4),Point(15,4),
+        #    Point(15,5),Point(14,5),Point(13,5),Point(12,5),Point(11,5),Point(10,5),Point(9,5),Point(8,5),Point(7,5),Point(6,5),Point(5,5),Point(4,5),Point(3,5),Point(2,5),Point(1,5),Point(0,5),
+        #    Point(0,6),Point(1,6),Point(2,6),Point(3,6),Point(4,6),Point(5,6),Point(6,6),Point(7,6),Point(8,6),Point(9,6),Point(10,6),Point(11,6),Point(12,6),Point(13,6),Point(14,6),Point(15,6),
+        #    Point(15,7)
+        #]
+        #self.length = len(self.body)
+        #self.set_direction(Glizda.DIR_LEFT)
+
+        self.length = len(self.body)
+
+    def head(self):
+        return self.body[-1]
+
+    def feed(self):
+        self.food += 1
+
+    def advance(self):
+        res = self.grow()
+        if self.food > 0:
+            self.food -= 1
+        else:
+            self.shrink()
+
+        return res
+
+    def grow(self):
+        new_head = self.head() + self.vector
+        if new_head in self.body:
+            return False
+        self.length += 1
+        self.body.append(new_head)
+        return True
+
+    def shrink(self):
+        self.length -= 1
+        del self.body[0]
+
+    def set_direction(self, direction):
+        if direction == Glizda.DIR_UP:
+            vector = Point(0, -1)
+        elif direction == Glizda.DIR_DOWN:
+            vector = Point(0, 1)
+        elif direction == Glizda.DIR_LEFT:
+            vector = Point(-1, 0)
+        elif direction == Glizda.DIR_RIGHT:
+            vector = Point(1, 0)
+        else:
+            pass
+
+        if vector.x != self.vector.x or vector.y != self.vector.y:
+            self.direction = direction
+            self.vector = vector
+
+# ------------------------------------------------------------------------
+class Food:
 # ------------------------------------------------------------------------
 
     # --------------------------------------------------------------------
-    def __init__(self, port_a, port_b, hz=60):
-        Game.__init__(self, port_a, port_b, hz)
-        self.screen = amonome.Screen(16, 8)
-        random.seed()
-        self.reset()
+    def __init__(self, probability, min_distance, grace_period):
+        self.probability = probability
+        self.min_distance = min_distance
+        self.grace_period = grace_period
+        self.pos = None
 
     # --------------------------------------------------------------------
-    def reset(self):
-        self.v = Point(1, 0)
-        self.new_v = self.v
-        self.glizda = [Point(1, 2), Point(2, 2), Point(3, 2)]
-        self.max_len = len(self.glizda)
-        self.add_food()
+    def add(self, allowed_positions):
+        try:
+            self.pos = random.sample(allowed_positions, 1)[0]
+            if self.grace_period >= 0:
+                self.grace_period -= 1
+            print("Added food at {}".format(str(self.pos)))
+        except:
+            pass
+
+    # --------------------------------------------------------------------
+    def remove(self):
+        self.pos = None
+
+    # --------------------------------------------------------------------
+    def try_moving(self, allowed_positions, predator_head):
+        if self.grace_period >= 0:
+            return
+        if self.pos.dist(predator_head) > self.min_distance:
+            return
+        if random.random() >= self.probability:
+            return
+        allowed_moves = set([
+            self.pos+Point(0, 1),
+            self.pos+Point(0, -1),
+            self.pos+Point(1, 0),
+            self.pos+Point(-1, 0),
+        ])
+        dest = random.sample(allowed_moves & allowed_positions, 1)
+        if dest:
+            self.pos = dest[0]
+
+       
+# ------------------------------------------------------------------------
+class GlizdaGame(Game):
+# ------------------------------------------------------------------------
+    
+    # --------------------------------------------------------------------
+    def __init__(self, width, height, port_a, port_b, hz, movable_food, absolute_control):
+        Game.__init__(self, width, height, port_a, port_b, hz)
+        self.whole_world = set([Point(x, y) for x in range(self.width) for y in range(self.height)])
+        self.glizda = Glizda()
+        self.absolute_control = absolute_control
+        if movable_food:
+            self.food = Food(probability=0.5, min_distance=3, grace_period=6)
+        else:
+            self.food = Food(probability=0, min_distance=0, grace_period=200)
+        initial_food_zone = set([Point(x, y) for x in range(self.width//2+2, self.width) for y in range(self.height)])
+        self.food.add(initial_food_zone & self.empty_fields())
+        self.had_meal = False
+
+    # --------------------------------------------------------------------
+    def empty_fields(self):
+        return self.whole_world - set(self.glizda.body)
 
     # --------------------------------------------------------------------
     def event_process(self, ev):
-        if ev.event == amonome.GRID_EV_BDOWN:
-            if self.v.x != 0:
-                if ev.y > self.glizda[-1].y:
-                    self.set_vector(Point(0, 1)) # Down
-                elif ev.y < self.glizda[-1].y:
-                    self.set_vector(Point(0, -1)) # Up
-            else:
-                if ev.x > self.glizda[-1].x:
-                    self.set_vector(Point(1, 0)) # Right
-                elif ev.x < self.glizda[-1].x:
-                    self.set_vector(Point(-1, 0)) # Left
+        new_dir = self.glizda.direction
 
-    # --------------------------------------------------------------------
-    def set_vector(self, direction):
-        self.new_v = direction
+        if ev.event == amonome.GRID_EV_BDOWN:
+            if self.absolute_control:
+                if ev.y == 6 and (ev.x == 14 or ev.x == 1):
+                    new_dir = Glizda.DIR_UP
+                elif ev.y == 7:
+                    if ev.x == 13 or ev.x == 0:
+                        new_dir = Glizda.DIR_LEFT
+                    elif ev.x == 14 or ev.x == 1:
+                        new_dir = Glizda.DIR_DOWN
+                    elif ev.x == 15 or ev.x == 2:
+                        new_dir = Glizda.DIR_RIGHT
+            else:
+                if self.glizda.direction in [Glizda.DIR_LEFT, Glizda.DIR_RIGHT]:
+                    if ev.y > self.glizda.head().y:
+                        new_dir = Glizda.DIR_DOWN
+                    elif ev.y < self.glizda.head().y:
+                        new_dir = Glizda.DIR_UP
+                else:
+                    if ev.x > self.glizda.head().x:
+                        new_dir = Glizda.DIR_RIGHT
+                    elif ev.x < self.glizda.head().x:
+                        new_dir = Glizda.DIR_LEFT
+
+            if new_dir != self.glizda.direction:
+                self.glizda.set_direction(new_dir)
 
     # --------------------------------------------------------------------
     def game_over(self):
-        print("Score: %i" % self.max_len)
-        for i in range(10):
-            self.s.intensity(2)
-            time.sleep(0.05)
-            self.s.intensity(15)
-            time.sleep(0.05)
-        n1 = int(self.max_len/10)
-        n2 = int(self.max_len%10)
-        if self.max_len < 10:
+        print("Score: %i" % self.glizda.length)
+
+        cycles = 10
+        for i in range(cycles):
+            self.s.intensity(0)
+            time.sleep(0.04)
+            brightness = int(15 - 15*i/cycles)
+            self.s.intensity(brightness)
+            time.sleep(0.04)
+
+        l = self.glizda.length
+        n0 = int(l / 100)
+        n1 = int((l-100*n0) / 10)
+        n2 = int(l%10)
+
+        self.screen.clear()
+        if self.glizda.length < 10:
             self.screen.import_array(6, 0, numbers[n2])
-        else:
+        elif self.glizda.length < 100:
             self.screen.import_array(3, 0, numbers[n1])
             self.screen.import_array(9, 0, numbers[n2])
+        elif self.glizda.length < 1000:
+            self.screen.import_array(0, 0, numbers[n0])
+            self.screen.import_array(6, 0, numbers[n1])
+            self.screen.import_array(12, 0, numbers[n2])
+
         self.s.blit(self.screen)
-        time.sleep(2)
-        self.s.reset()
+        self.s.intensity(15)
+        time.sleep(1)
 
     # --------------------------------------------------------------------
-    def add_food(self):
-        x = random.randint(0, 15)
-        y = random.randint(0, 7)
-        self.food = Point(x, y)
-        while self.food in self.glizda:
-            x = random.randint(0, 15)
-            y = random.randint(0, 7)
-            self.food = Point(x, y)
-        self.s.led(True, self.food.x, self.food.y)
-        print(self.food)
+    def draw(self):
+        for i in self.glizda.body:
+            if i.x >= 0 and i.x < self.width and i.y >= 0 and i.y < self.height:
+                self.screen.set(True, i.x, i.y)
+        if self.food.pos:
+            self.screen.set(True, self.food.pos.x, self.food.pos.y)
 
     # --------------------------------------------------------------------
     def logic_tick(self):
-        # activate new vector
-        if self.new_v:
-            self.v = self.new_v
 
-        # calculate new head
-        head = self.glizda[-1]
-        nhead = head + self.v
-
-        # check for walls/self collisions
-        if nhead.x > 15 or nhead.x < 0 or nhead.y > 7 or nhead.y < 0 or nhead in self.glizda:
+        if not self.glizda.advance():
+            print("Collision: self")
             return False
 
-        # grow the worm
-        self.glizda.append(nhead)
-        self.s.led(True, nhead.x, nhead.y)
+        hd = self.glizda.head()
 
-        # check for food collision
-        if self.food == nhead:
-            self.s.led(False, nhead.x, nhead.y)
-            time.sleep(0.02)
-            self.s.led(True, nhead.x, nhead.y)
-            time.sleep(0.02)
-            self.s.led(False, nhead.x, nhead.y)
-            time.sleep(0.02)
-            self.s.led(True, nhead.x, nhead.y)
-            time.sleep(0.02)
-            self.max_len += 1
-            self.add_food()
+        if hd.x >= self.width or hd.x < 0 or hd.y >= self.height or hd.y < 0:
+            print("Collision: border")
+            return False
 
-        # move the worm
-        while len(self.glizda) > self.max_len:
-            self.s.led(False, self.glizda[0].x, self.glizda[0].y)
-            del self.glizda[0]
-
+        if hd == self.food.pos:
+            self.glizda.feed()
+            print("Food eaten (len: {})".format(self.glizda.length))
+            self.s.led(False, hd.x, hd.y)
+            time.sleep(0.02)
+            self.s.led(True, hd.x, hd.y)
+            time.sleep(0.02)
+            self.s.led(False, hd.x, hd.y)
+            time.sleep(0.02)
+            self.s.led(True, hd.x, hd.y)
+            time.sleep(0.02)
+            self.food.remove()
+            self.food.add(self.empty_fields())
+        else:
+            self.food.try_moving(self.empty_fields(), hd)
 
 # ------------------------------------------------------------------------
 # --- MAIN ---------------------------------------------------------------
 # ------------------------------------------------------------------------
 
 while True:
-    level = Level("/dev/ttyUSB0", "/dev/ttyUSB1", 5)
+    level = GlizdaLevel(16, 8, "/dev/ttyUSB0", "/dev/ttyUSB1", 5)
     level.run()
 
-    game = Glizda("/dev/ttyUSB0", "/dev/ttyUSB1", level.level)
+    game = GlizdaGame(16, 8, "/dev/ttyUSB0", "/dev/ttyUSB1", level.level, level.movable_food, level.absolute_control)
     game.run()
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4

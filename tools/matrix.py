@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import time
 import amonome
 
 matrix = [[0 for x in range(8)] for x in range(16)]
@@ -19,12 +20,14 @@ def process_event(e):
 # --- MAIN ---------------------------------------------------------------
 # ------------------------------------------------------------------------
 
-g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
 g.reset()
 
 while True:
     try:
-        for e in g.read():
+        time.sleep(0.01)
+        e = g.read()
+        if e:
             process_event(e)
     except KeyboardInterrupt:
         print("Bye.")

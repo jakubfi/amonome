@@ -156,7 +156,7 @@ def update_screen(g):
 
 random.seed()
 
-g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0.05)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
 g.reset()
 
 while True:
@@ -164,7 +164,8 @@ while True:
     start_tick = time.time()
     while time_spent < frame_time:
         try:
-            for e in g.read():
+            e = g.read()
+            if e:
                 process_event(e, matrix)
         except KeyboardInterrupt:
             print("Bye.")

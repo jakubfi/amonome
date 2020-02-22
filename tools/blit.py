@@ -3,7 +3,7 @@
 import amonome
 import time
 
-g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
+g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
 g.reset()
 
 digit = [

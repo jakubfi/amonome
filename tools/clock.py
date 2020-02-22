@@ -112,7 +112,7 @@ def update(t, tsec, s):
 # --- MAIN ---------------------------------------------------------------
 # ------------------------------------------------------------------------
 try:
-    g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1", 0)
+    g = amonome.Amonome("/dev/ttyUSB0", "/dev/ttyUSB1")
     g.reset()
 except Exception as e:
     print("Cannot initialize amonome: %s" % str(e))
