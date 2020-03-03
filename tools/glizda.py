@@ -412,9 +412,12 @@ class Food:
             self.pos+Point(1, 0),
             self.pos+Point(-1, 0),
         ])
-        dest = random.sample(allowed_moves & allowed_positions, 1)
-        if dest:
-            self.pos = dest[0]
+        try:
+            dest = random.sample(allowed_moves & allowed_positions, 1)
+            if dest:
+                self.pos = dest[0]
+        except:
+            pass
 
        
 # ------------------------------------------------------------------------
