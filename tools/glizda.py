@@ -204,8 +204,8 @@ class GlizdaLevel(Game):
 # ------------------------------------------------------------------------
 
     # --------------------------------------------------------------------
-    def __init__(self, width, height, port_a, port_b, hz=60):
-        Game.__init__(self, width, height, port_a, port_b, hz)
+    def __init__(self, width, height, port_a, port_b, frame_time):
+        Game.__init__(self, width, height, port_a, port_b, frame_time)
         self.level = 0
         self.movable_food = True
         self.absolute_control = False
@@ -221,15 +221,15 @@ class GlizdaLevel(Game):
                 self.absolute_control = True
             if ev.y == 6 or ev.y == 7:
                 if ev.x == 4:
-                    self.level = 1
+                    self.level = 1.0/1
                 elif ev.x == 6:
-                    self.level = 5
+                    self.level = 1.0/5
                 elif ev.x == 8:
-                    self.level = 7
+                    self.level = 1.0/7
                 elif ev.x == 10:
-                    self.level = 10
+                    self.level = 0.107
                 elif ev.x == 12:
-                    self.level = 15
+                    self.level = 1.0/15
 
     # --------------------------------------------------------------------
     def game_over(self):
@@ -425,8 +425,8 @@ class GlizdaGame(Game):
 # ------------------------------------------------------------------------
     
     # --------------------------------------------------------------------
-    def __init__(self, width, height, port_a, port_b, hz, movable_food, absolute_control):
-        Game.__init__(self, width, height, port_a, port_b, hz)
+    def __init__(self, width, height, port_a, port_b, frame_time, movable_food, absolute_control):
+        Game.__init__(self, width, height, port_a, port_b, frame_time)
         self.whole_world = set([Point(x, y) for x in range(self.width) for y in range(self.height)])
         self.glizda = Glizda()
         self.absolute_control = absolute_control
@@ -546,7 +546,7 @@ class GlizdaGame(Game):
 # ------------------------------------------------------------------------
 
 while True:
-    level = GlizdaLevel(16, 8, "/dev/ttyUSB0", "/dev/ttyUSB1", 5)
+    level = GlizdaLevel(16, 8, "/dev/ttyUSB0", "/dev/ttyUSB1", 1.0/5)
     level.run()
 
     game = GlizdaGame(16, 8, "/dev/ttyUSB0", "/dev/ttyUSB1", level.level, level.movable_food, level.absolute_control)

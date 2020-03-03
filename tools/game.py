@@ -6,15 +6,14 @@ class Game:
 # ------------------------------------------------------------------------
 
     # --------------------------------------------------------------------
-    def __init__(self, width, height, port_a, port_b, hz=60):
+    def __init__(self, width, height, port_a, port_b, frame_time):
         self.width = width
         self.height = height
-        self.hz = hz
-        self.frame_time = 1.0 / self.hz
+        self.frame_time = frame_time
         self.s = amonome.Amonome(port_a, port_b)
         self.s.reset()
         self.screen = amonome.Screen(self.width, self.height)
-        print("Surface on %s and %s initialized for %i Hz (frame time: %.2f)" % (port_a, port_b, hz, self.frame_time))
+        print("Surface on %s and %s initialized for frame time: %.3f" % (port_a, port_b, self.frame_time))
 
     # --------------------------------------------------------------------
     def event_process(self, e):
@@ -22,7 +21,7 @@ class Game:
 
     # --------------------------------------------------------------------
     def logic_tick(self):
-        print("=== TICK %d Hz ===" % self.hz)
+        print("=== TICK frame time: %.3f ===" % self.frame_time)
 
     # --------------------------------------------------------------------
     def game_over(self):
